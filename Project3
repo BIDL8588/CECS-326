@@ -1,1 +1,210 @@
 
+
+#include <stdio.h>
+#include <stdbool.h>
+
+int max[100][100];
+int allocation[100][100];
+int need[100][100];
+int available[100];
+
+void c_need(int n, int m) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            need[i][j] = max[i][j] - allocation[i][j];
+        }
+    }
+}
+
+bool isSafe(int n, int m) {
+    bool finish[n];
+    int work[m];
+    int safe_seq[n];
+    int count = 0;
+
+    for (int i = 0; i < n; i++) {
+        finish[i] = false;
+    }
+
+    for (int j = 0; j < m; j++) {
+        work[j] = available[j];
+    }
+
+
+    while (count < n) {
+        bool f_process = false; 
+
+        for (int i = 0; i < n; i++) {
+            if (!finish[i]) {
+                bool can_a = true; 
+                for (int j = 0; j < m; j++) {
+                    if (need[i][j] > work[j]) {
+                        can_a = false;
+                        break;
+                    }
+                }
+
+                if (can_a) {
+                    for (int j = 0; j < m; j++) {
+                        work[j] += allocation[i][j];
+                    }
+                    finish[i] = true;
+                    safe_seq[count++] = i;
+                    f_process = true;
+                }
+            }
+        }
+        if (!f_process) {
+            return false;
+        }
+    }
+
+    printf("System is in a safe state.\nSafe Sequence: [");
+    for (int i = 0; i < n; i++) {
+        printf("%d", safe_seq[i]);
+        if (i < n - 1) {
+            printf(", ");
+        }
+    }
+    printf("]\n");
+    return true;
+}
+
+void show(int n, int m) {
+
+    printf("\n# Available Vector (initially total resources available)\n");
+    printf("Available = [");
+    for (int j = 0; j < m; j++) {
+        printf("%d", available[j]);
+        if (j < m - 1) {
+            printf(", ");
+        }
+    }
+    printf("]\n");
+
+
+    printf("\n# Maximum Matrix\nMax = [\n");
+    for (int i = 0; i < n; i++) {
+        printf("  [");
+        for (int j = 0; j < m; j++) {
+            printf("%d", max[i][j]);
+            if (j < m - 1) {
+                printf(", ");
+            }
+        }
+        printf("]");
+        if (i < n - 1) {
+            printf(",");
+        }
+        printf("\n");
+    }
+    printf("]\n");
+
+    printf("\n# Allocation Matrix\nAllocation = [\n");
+    for (int i = 0; i < n; i++) {
+        printf("  [");
+        for (int j = 0; j < m; j++) {
+            printf("%d", allocation[i][j]);
+            if (j < m - 1) {
+                printf(", ");
+            }
+        }
+        printf("]");
+        if (i < n - 1) {
+            printf(",");
+        }
+        printf("\n");
+    }
+    printf("]\n");
+
+    printf("\n# Need Matrix (Max - Allocation)\nNeed = [\n");
+    for (int i = 0; i < n; i++) {
+        printf("  [");
+        for (int j = 0; j < m; j++) {
+            printf("%d", need[i][j]);
+            if (j < m - 1) {
+                printf(", ");
+            }
+        }
+        printf("]");
+        if (i < n - 1) {
+            printf(",");
+        }
+        printf("\n");
+    }
+    printf("]\n");
+}
+
+void request_resources(int process, int request[], int n, int m) {
+    bool can_grant = true;
+    for (int j = 0; j < m; j++) {
+
+        if (request[j] > need[process][j] || request[j] > available[j]) {
+            can_grant = false;
+            break;
+        }
+    }
+
+    if (can_grant) {
+        for (int j = 0; j < m; j++) {
+            available[j] -= request[j];
+            allocation[process][j] += request[j];
+            need[process][j] -= request[j];
+        }
+        printf("\n request by P%d for resources [", process);
+        for (int j = 0; j < m; j++) {
+            printf("%d", request[j]);
+            if (j < m - 1) {
+                printf(", ");
+            }
+        }
+        printf("]\n");
+
+        if (isSafe(n, m)) {
+            printf("Resources allocated to process %d.\n", process);
+        } else {
+            printf("Error: Not enough resources available.\n");
+            for (int j = 0; j < m; j++) {
+                available[j] += request[j];
+                allocation[process][j] -= request[j];
+                need[process][j] += request[j];
+            }
+        }
+    } else {
+        printf("Request cannot be granted. Exceeds need or available resources.\n");
+    }
+}
+
+int main() {
+    int n, m;
+
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+    printf("Enter the number of resource types: ");
+    scanf("%d", &m);
+
+    printf("Enter available resources: ");
+    for (int j = 0; j < m; j++) {
+        scanf("%d", &available[j]); 
+    }
+    printf("Enter Allocation matrix:\n");
+    for (int i = 0; i < n; i++) {
+        printf("Process %d: ", i);
+        for (int j = 0; j < m; j++) {
+            scanf("%d", &allocation[i][j]);
+        }
+    }
+    printf("Enter Max matrix:\n");
+    for (int i = 0; i < n; i++) {
+        printf("Process %d: ", i);
+        for (int j = 0; j < m; j++) {
+            scanf("%d", &max[i][j]);
+        }
+    }
+    c_need(n, m);
+    show(n,m);
+    //isSafe(n,m);
+    //int request1[] = {3, 3, 1};
+    //request_resources(4, request1, n, m);
+
+}
